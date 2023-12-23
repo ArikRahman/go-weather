@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,11 +19,12 @@ var html = `
 </head>
 <body>
     <h1>WebSocket Test</h1>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
     <script type="text/javascript">
         var ws = new WebSocket("ws://{{.}}/ws");
         ws.onopen = function() {
             console.log("Connected to WebSocket");
-            ws.send("Hello Server");
         };
         ws.onmessage = function(evt) {
             var received_msg = evt.data;
@@ -30,6 +33,11 @@ var html = `
         ws.onclose = function() { 
             console.log("Connection is closed..."); 
         };
+        function sendMessage() {
+            var message = document.getElementById('messageInput').value;
+            ws.send(message);
+            console.log("Message sent:", message);
+        }
     </script>
 </body>
 </html>
@@ -44,6 +52,7 @@ var wsupgrader = websocket.Upgrader{
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := wsupgrader.Upgrade(w, r, nil)
 	if err != nil {
+
 		return
 	}
 	defer conn.Close()
@@ -57,6 +66,9 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Print the message to the console
 		println(string(msg))
+		if string(msg) == "katy" {
+			print("Hey that's where I live!")
+		}
 
 		// Write message back to browser
 		if err = conn.WriteMessage(msgType, msg); err != nil {
@@ -66,6 +78,31 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// The URL you want to make a request to
+	url := "http://wttr.in"
+
+	// Make a GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		// Handle error
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close() // Make sure to close the body
+
+	// Read the response body using io.ReadAll
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		// Handle error
+		fmt.Println(err)
+		return
+	}
+
+	// Print the response body
+	fmt.Println(string(body))
+
+	///Websockets begins here.
+
 	r := gin.Default()
 
 	// Serve HTML page at root
