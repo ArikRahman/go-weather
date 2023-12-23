@@ -29,6 +29,7 @@ var html = `
         ws.onmessage = function(evt) {
             var received_msg = evt.data;
             console.log("Message is received:", received_msg);
+			document.body.innerHTML = evt.data; // Replace the entire body, or target a specific element
         };
         ws.onclose = function() { 
             console.log("Connection is closed..."); 
@@ -68,6 +69,29 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		println(string(msg))
 		if string(msg) == "katy" {
 			print("Hey that's where I live!")
+			// The URL you want to make a request to
+			url := "http://wttr.in"
+
+			// Make a GET request
+			resp, err := http.Get(url)
+			if err != nil {
+				// Handle error
+				fmt.Println(err)
+				return
+			}
+			defer resp.Body.Close() // Make sure to close the body
+
+			// Read the response body using io.ReadAll
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				// Handle error
+				fmt.Println(err)
+				return
+			}
+
+			// Print the response body
+			fmt.Println(string(body))
+
 		}
 
 		// Write message back to browser
@@ -78,28 +102,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// The URL you want to make a request to
-	url := "http://wttr.in"
-
-	// Make a GET request
-	resp, err := http.Get(url)
-	if err != nil {
-		// Handle error
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close() // Make sure to close the body
-
-	// Read the response body using io.ReadAll
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		// Handle error
-		fmt.Println(err)
-		return
-	}
-
-	// Print the response body
-	fmt.Println(string(body))
 
 	///Websockets begins here.
 
