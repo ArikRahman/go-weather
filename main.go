@@ -53,50 +53,38 @@ var wsupgrader = websocket.Upgrader{
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := wsupgrader.Upgrade(w, r, nil)
 	if err != nil {
-
 		return
 	}
 	defer conn.Close()
 
 	for {
-		// Read message from browser
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
+			fmt.Println(string(msgType))
 			return
 		}
-
-		// Print the message to the console
 		println(string(msg))
 		if string(msg) == "katy" {
-			print("Hey that's where I live!")
-			// The URL you want to make a request to
+			// Fetch weather data
 			url := "http://wttr.in"
-
-			// Make a GET request
 			resp, err := http.Get(url)
 			if err != nil {
-				// Handle error
-				fmt.Println(err)
+				fmt.Println("Error fetching weather:", err)
 				return
 			}
-			defer resp.Body.Close() // Make sure to close the body
+			defer resp.Body.Close()
 
-			// Read the response body using io.ReadAll
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				// Handle error
-				fmt.Println(err)
+				fmt.Println("Error reading response:", err)
 				return
 			}
 
-			// Print the response body
-			fmt.Println(string(body))
-
-		}
-
-		// Write message back to browser
-		if err = conn.WriteMessage(msgType, msg); err != nil {
-			return
+			// Send weather data to the client
+			if err := conn.WriteMessage(websocket.TextMessage, body); err != nil {
+				fmt.Println("Error sending message:", err)
+				return
+			}
 		}
 	}
 }
